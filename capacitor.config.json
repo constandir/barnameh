@@ -1,0 +1,9 @@
+{
+  "appId": "app.yearjournal.personal",
+  "appName": "دفتر سالانه",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  },
+  "backgroundColor": "#f6f1e6"
+}
