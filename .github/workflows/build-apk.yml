@@ -23,7 +23,13 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - uses: android-actions/setup-android@v3
+      # Android SDK از قبل روی ران‌نر هست؛ فقط مجوزها و پکیج‌های لازم را می‌گیریم
+      - name: Prepare Android SDK
+        run: |
+          SM=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | sort -V | tail -1)
+          echo "sdkmanager: $SM"
+          yes | "$SM" --sdk_root="$ANDROID_HOME" --licenses > /dev/null || true
+          "$SM" --sdk_root="$ANDROID_HOME" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
