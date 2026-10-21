@@ -1184,7 +1184,7 @@ function tagSection(){
 /* ثبت سریع: فقط عنوان + دسته + ستاره، با یک Enter */
 function quickBar(){
   let catTouched=false;
-  const title=h('input',{type:'text',id:'qTitle',maxlength:'200',list:'dlTitles','aria-label':'ثبت سریع',placeholder:'ثبت سریع: اسم چیزی که انجام دادی…',autocomplete:'off',enterkeyhint:'done'});
+  const title=h('input',{type:'text',id:'qTitle',maxlength:'200','aria-label':'ثبت سریع',placeholder:'ثبت سریع: اسم چیزی که انجام دادی…',autocomplete:'off',enterkeyhint:'done'});
   const cat=makeCatSelect(UI.lastCat,v=>{UI.lastCat=v;catTouched=true;},true,{'aria-label':'دسته'});
   const rating=ratingInput(0,true);
   const hint=h('p',{class:'hint',hidden:true});
