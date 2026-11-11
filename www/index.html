@@ -353,8 +353,6 @@ dialog.dlg::backdrop{background:rgba(20,15,10,.55);backdrop-filter:blur(2px)}
 <button id="fab" class="fab" type="button" aria-label="ثبت مورد جدید (کلید N)">＋</button>
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="printRoot" aria-hidden="true"></div>
-<datalist id="dlTitles"></datalist>
-<datalist id="dlCreators"></datalist>
 <noscript><p style="padding:20px">برای استفاده از این برنامه جاوااسکریپت باید فعال باشد.</p></noscript>
 
 <script>
@@ -944,15 +942,8 @@ function topTags(n){
   S.items.forEach(i=>i.tags.forEach(t=>{c[t]=(c[t]||0)+1;}));
   return Object.entries(c).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'fa')).slice(0,n).map(x=>x[0]);
 }
-/* فهرست‌های پیشنهاد مرورگر برای عنوان و سازنده */
-function renderDatalists(){
-  const fill=(id,vals)=>{const el=document.getElementById(id);if(el)el.replaceChildren(...vals.map(v=>h('option',{value:v})));};
-  const titles=new Set(),cre=new Set();
-  S.items.forEach(i=>{titles.add(i.title);if(i.creator)cre.add(i.creator);});
-  S.wish.forEach(w=>titles.add(w.title));
-  fill('dlTitles',[...titles].slice(-400));
-  fill('dlCreators',[...cre].slice(-400));
-}
+/* پیشنهاد مرورگر/کیبورد برای عنوان و سازنده عمداً حذف شده */
+function renderDatalists(){}
 /* اگر مورد هم‌عنوان و هم‌دسته در لیست «بعداً» باشد، با ثبت از آن برداشته می‌شود */
 /* یادداشت و منبعِ مورد «بعداً» وقتی به دفتر می‌رود دور ریخته نشود: در توضیح می‌آید */
 const wishNotes=w=>[w.note,w.source?`منبع: ${w.source}`:''].filter(Boolean).join('\n');
@@ -990,7 +981,7 @@ function makeCatSelect(value,onChange,withNew,props){
 const EMOJIS=['🎬','📺','📚','🎮','🎓','🎙️','🎞️','✈️','🍽️','🎵','🎨','🏋️','⚽','🧩','🎭','🛍️','💻','🌱','🍳','🎲','📷','🏕️','☕','🧘'];
 const COLORS=['#e11d48','#7c3aed','#0d9488','#2563eb','#d97706','#db2777','#4d7c0f','#0891b2','#ea580c','#9333ea','#64748b','#16a34a'];
 function openCatForm(cat,onSaved){
-  const name=h('input',{type:'text',maxlength:'30',value:cat?cat.name:'',placeholder:'مثلاً: ورزش، نمایشگاه، وبینار',autocomplete:'off','aria-label':'نام دسته'});
+  const name=h('input',{type:'text',maxlength:'30',value:cat?cat.name:'',placeholder:'مثلاً: ورزش، نمایشگاه، وبینار',autocomplete:'off',spellcheck:'false',autocorrect:'off','aria-label':'نام دسته'});
   const icon=h('input',{type:'text',maxlength:'8',value:cat?cat.icon:'✨','aria-label':'ایموجی',style:'width:5rem;text-align:center;font-size:1.4rem'});
   const color=h('input',{type:'color',value:cat?cat.color:COLORS[(S.cats.length)%COLORS.length],'aria-label':'رنگ'});
   const kind=select(Object.entries(KINDS).map(([k,v])=>[k,v.name]),cat&&hasKey(KINDS,cat.kind)?cat.kind:'generic',null,{'aria-label':'نوع دسته'});
@@ -1095,7 +1086,7 @@ function removeTag(t){
   return n;
 }
 function openTagRename(t,stats){
-  const input=h('input',{type:'text',maxlength:'30',value:t,autocomplete:'off','aria-label':'نام جدید تگ'});
+  const input=h('input',{type:'text',maxlength:'30',value:t,autocomplete:'off',spellcheck:'false',autocorrect:'off','aria-label':'نام جدید تگ'});
   const info=h('p',{class:'hint',hidden:true});
   input.addEventListener('input',()=>{
     const nv=cleanTags([input.value])[0];
@@ -1160,7 +1151,7 @@ function tagSection(){
           }}));
       })));
   }
-  const q=h('input',{type:'search',placeholder:'جستجوی تگ…','aria-label':'جستجوی تگ‌ها',autocomplete:'off'});
+  const q=h('input',{type:'search',placeholder:'جستجوی تگ…','aria-label':'جستجوی تگ‌ها',autocomplete:'off',spellcheck:'false',autocorrect:'off'});
   const list=h('div');
   const refresh=()=>{
     const k=tkey(q.value);
@@ -1184,25 +1175,22 @@ function tagSection(){
 /* ثبت سریع: فقط عنوان + دسته + ستاره، با یک Enter */
 function quickBar(){
   let catTouched=false;
-  const title=h('input',{type:'text',id:'qTitle',maxlength:'200','aria-label':'ثبت سریع',placeholder:'ثبت سریع: اسم چیزی که انجام دادی…',autocomplete:'off',enterkeyhint:'done'});
+  const title=h('input',{type:'text',id:'qTitle',maxlength:'200','aria-label':'ثبت سریع',placeholder:'ثبت سریع: اسم چیزی که انجام دادی…',autocomplete:'off',spellcheck:'false',autocorrect:'off',enterkeyhint:'done'});
   const cat=makeCatSelect(UI.lastCat,v=>{UI.lastCat=v;catTouched=true;},true,{'aria-label':'دسته'});
   const rating=ratingInput(0,true);
   const hint=h('p',{class:'hint',hidden:true});
   function fill(){
     const m=historyMatch(title.value);
     if(!m){hint.hidden=true;return null;}
-    if(!catTouched&&CAT[m.item.cat]){cat.value=m.item.cat;UI.lastCat=m.item.cat;}
-    hint.textContent=`🔁 قبلاً ${fa(m.count)} بار ثبت شده؛ سازنده و تگ‌ها از همان پر می‌شود.`;
-    hint.hidden=false;
+    hint.hidden=true;
     return m;
   }
   const add=()=>{
     const t=title.value.trim();
     if(!t){title.focus();return;}
     const m=fill();
-    const same=m&&m.item.cat===cat.value;
     const rec=cleanItem({id:uid(),title:t,cat:cat.value,rating:rating.get(),date:todayISO(),status:'done',
-      creator:same?m.item.creator:'',tags:same?m.item.tags:[],total:same?m.item.total:0,times:m?m.next:1,created:Date.now()});
+      creator:'',tags:[],total:0,times:m?m.next:1,created:Date.now()});
     S.items.push(rec);
     const removed=removeMatchingWish(rec);
     UI.lastCat=rec.cat;UI.year=yearOf(rec.date);UI.filters=defaultFilters();
@@ -1225,25 +1213,25 @@ function openItemForm(item,opts){
   const base={title:'',cat:(CAT[UI.lastCat]?UI.lastCat:CATS[0].id),rating:0,notes:'',date:todayISO(),tags:[],creator:'',status:'done',fav:false,link:''};
   const d0={...base,...(item||{}),...(opts.prefill||{})};
   if(!CAT[d0.cat])d0.cat='other';
-  const titleIn=h('input',{type:'text',maxlength:'200',value:d0.title,placeholder:'مثلاً: اینترستلار، سووشون، دوره‌ی پایتون',autocomplete:'off',list:'dlTitles'});
+  const titleIn=h('input',{type:'text',maxlength:'200',value:d0.title,placeholder:'مثلاً: اینترستلار، سووشون، دوره‌ی پایتون',autocomplete:'off',spellcheck:'false',autocorrect:'off'});
   const err=h('p',{class:'err',role:'alert',hidden:true,text:'عنوان را بنویس.'});
   let catTouched=!!item||!!(opts.prefill&&opts.prefill.cat);
   const catSel=makeCatSelect(d0.cat,()=>{catTouched=true;syncKind();},true);
   const statusSel=select(Object.entries(STATUS),d0.status);
   const rating=ratingInput(d0.rating);
   const date=datePicker(d0.date);
-  const creatorIn=h('input',{type:'text',maxlength:'120',value:d0.creator,placeholder:'کارگردان، نویسنده، پلتفرم…',autocomplete:'off',list:'dlCreators'});
+  const creatorIn=h('input',{type:'text',maxlength:'120',value:d0.creator,placeholder:'کارگردان، نویسنده، پلتفرم…',autocomplete:'off',spellcheck:'false',autocorrect:'off'});
   const tagsIn=h('input',{type:'text',value:d0.tags.join('، '),placeholder:'با ویرگول جدا کن: درام، تکرارشدنی'});
-  const linkIn=h('input',{type:'text',class:'ltr',inputmode:'url',value:d0.link,placeholder:'https://…',autocomplete:'off'});
+  const linkIn=h('input',{type:'text',class:'ltr',inputmode:'url',value:d0.link,placeholder:'https://…',autocomplete:'off',spellcheck:'false',autocorrect:'off'});
   const linkErr=h('p',{class:'err',hidden:true,text:'این لینک معتبر نیست (فقط http و https).'});
   const notes=h('textarea',{maxlength:'5000',placeholder:'نظر و احساس شخصی‌ات…'});
   notes.value=d0.notes;
   const favIn=h('input',{type:'checkbox',checked:!!d0.fav});
 
   /* فیلدهای اضافه بر اساس نوع دسته */
-  const mkNum=(v,dec)=>numField(h('input',{type:'text',inputmode:dec?'decimal':'numeric',maxlength:'7',autocomplete:'off',value:v?(dec?fmtR(v):fa(v)):''}),dec);
+  const mkNum=(v,dec)=>numField(h('input',{type:'text',inputmode:dec?'decimal':'numeric',maxlength:'7',autocomplete:'off',spellcheck:'false',autocorrect:'off',value:v?(dec?fmtR(v):fa(v)):''}),dec);
   const curIn=mkNum(d0.cur),totalIn=mkNum(d0.total),seasonIn=mkNum(d0.season),hoursIn=mkNum(d0.hours,true),timesIn=mkNum(d0.times>1?d0.times:1);
-  const placeIn=h('input',{type:'text',maxlength:'120',value:d0.place,autocomplete:'off'});
+  const placeIn=h('input',{type:'text',maxlength:'120',value:d0.place,autocomplete:'off',spellcheck:'false',autocorrect:'off'});
   const creatorLbl=h('span'),lCur=h('span'),lTotal=h('span'),lHours=h('span');
   const wSeason=h('label',{class:'fld'},h('span',{text:'فصل'}),seasonIn);
   const wCur=h('label',{class:'fld'},lCur,curIn);
@@ -1263,32 +1251,14 @@ function openItemForm(item,opts){
     wPlace.hidden=!k.place;
   }
 
-  /* پیشنهاد تگ‌های پرکاربرد (با یک کلیک اضافه می‌شوند) */
-  const tagSug=h('div',{class:'tagsug','aria-label':'تگ‌های پرکاربرد'});
-  function renderTagSug(){
-    const cur=new Set(cleanTags(tagsIn.value));
-    tagSug.replaceChildren(...topTags(12).filter(t=>!cur.has(t)).map(t=>h('button',{type:'button',class:'tag',text:'+ '+t,onclick:()=>{
-      tagsIn.value=cleanTags([...cleanTags(tagsIn.value),t]).join('، ');
-      renderTagSug();
-    }})));
-  }
-  tagsIn.addEventListener('input',renderTagSug);
+  const renderTagSug=()=>{};
   /* پر کردن خودکار از سابقه: اگر عنوان قبلاً ثبت شده، دسته/سازنده/تگ را پیشنهاد بده */
   const hint=h('p',{class:'hint',hidden:true});
   function autofill(){
     if(item)return;
     const t=titleIn.value.trim();
-    const m=historyMatch(t);
     const inWish=t&&S.wish.some(w=>tkey(w.title)===tkey(t));
     const msgs=[];
-    if(m){
-      if(!catTouched&&CAT[m.item.cat]){catSel.value=m.item.cat;syncKind();}
-      if(!creatorIn.value.trim()&&m.item.creator)creatorIn.value=m.item.creator;
-      if(m.item.cat===catSel.value&&m.item.total&&!totalIn.value)totalIn.value=fa(m.item.total);
-      if(parseNum(timesIn.value)<=1)timesIn.value=fa(m.next);
-      if(!tagsIn.value.trim()&&m.item.tags.length){tagsIn.value=m.item.tags.join('، ');renderTagSug();}
-      msgs.push(`🔁 قبلاً ${fa(m.count)} بار ثبت شده؛ سازنده و تگ‌ها از همان پر شد و «چندمین بار» روی ${fa(m.next)} رفت.`);
-    }
     if(inWish&&!opts.wishId)msgs.push('🔖 در لیست «بعداً» هست و با ثبت از آن برداشته می‌شود.');
     hint.textContent=msgs.join(' ');
     hint.hidden=!msgs.length;
@@ -1348,7 +1318,7 @@ function openItemForm(item,opts){
     h('label',{class:'fld'},h('span',{text:'توضیح / نقد شخصی'}),notes),
     h('div',{class:'grid2'},
       h('label',{class:'fld'},creatorLbl,creatorIn),
-      h('label',{class:'fld'},h('span',{text:'تگ‌ها'}),tagsIn,tagSug)),
+      h('label',{class:'fld'},h('span',{text:'تگ‌ها'}),tagsIn)),
     h('div',{class:'grid2'},wSeason,wCur,wTotal,wHours,wPlace,wTimes),
     h('label',{class:'fld'},h('span',{text:'لینک (اختیاری)'}),linkIn,linkErr),
     h('label',{class:'chk'},favIn,h('span',{text:'❤️ موردعلاقه'})),
@@ -1463,7 +1433,7 @@ function extraMeta(i){
 function progressBlock(i){
   const k=kindOf(i.cat);
   if(!k.unit||i.status!=='doing')return null;
-  const input=numField(h('input',{type:'text',inputmode:'numeric',maxlength:'7',value:i.cur?fa(i.cur):'',placeholder:'۰','aria-label':`${k.unit} فعلی ${i.title}`,autocomplete:'off'}));
+  const input=numField(h('input',{type:'text',inputmode:'numeric',maxlength:'7',value:i.cur?fa(i.cur):'',placeholder:'۰','aria-label':`${k.unit} فعلی ${i.title}`,autocomplete:'off',spellcheck:'false',autocorrect:'off'}));
   input.addEventListener('change',()=>{
     let v=pInt(input.value);
     if(i.total&&v>i.total)v=i.total;
@@ -1559,7 +1529,7 @@ function viewJournal(){
       }}));
     }
   }
-  const search=h('input',{type:'search',id:'search',value:f.q,placeholder:'جستجو در عنوان، توضیح و تگ‌ها…   ( / )','aria-label':'جستجو',autocomplete:'off'});
+  const search=h('input',{type:'search',id:'search',value:f.q,placeholder:'جستجو در عنوان، توضیح و تگ‌ها…   ( / )','aria-label':'جستجو',autocomplete:'off',spellcheck:'false',autocorrect:'off'});
   let searchTimer;
   search.addEventListener('input',()=>{
     f.q=search.value;
@@ -1656,26 +1626,20 @@ function viewWish(){
   if(UI.wishTag&&!wishTags.includes(UI.wishTag))UI.wishTag='';
 
   /* فرم افزودن سریع + جزئیات اختیاری */
-  const title=h('input',{type:'text',id:'wishTitle',maxlength:'200',value:editing?editing.title:'',placeholder:'چی می‌خوای بعداً انجام بدی؟','aria-label':'عنوان',autocomplete:'off',enterkeyhint:'done'});
+  const title=h('input',{type:'text',id:'wishTitle',maxlength:'200',value:editing?editing.title:'',placeholder:'چی می‌خوای بعداً انجام بدی؟','aria-label':'عنوان',autocomplete:'off',spellcheck:'false',autocorrect:'off',enterkeyhint:'done'});
   const cat=makeCatSelect(editing?editing.cat:UI.lastWishCat,null,true,{'aria-label':'دسته'});
   const prio=select(PRIO.map(([k,v])=>[k,'اولویت '+v]),editing?editing.priority:'mid',null,{'aria-label':'اولویت'});
-  const note=h('input',{type:'text',maxlength:'500',value:editing?editing.note:'',placeholder:'یادداشت (اختیاری): کجا ببینم؟ چرا می‌خوامش؟','aria-label':'یادداشت',autocomplete:'off'});
-  const link=h('input',{type:'text',class:'ltr',inputmode:'url',value:editing?editing.link:'',placeholder:'لینک (اختیاری) https://…','aria-label':'لینک',autocomplete:'off'});
+  const note=h('input',{type:'text',maxlength:'500',value:editing?editing.note:'',placeholder:'یادداشت (اختیاری): کجا ببینم؟ چرا می‌خوامش؟','aria-label':'یادداشت',autocomplete:'off',spellcheck:'false',autocorrect:'off'});
+  const link=h('input',{type:'text',class:'ltr',inputmode:'url',value:editing?editing.link:'',placeholder:'لینک (اختیاری) https://…','aria-label':'لینک',autocomplete:'off',spellcheck:'false',autocorrect:'off'});
   const linkErr=h('p',{class:'err',hidden:true,text:'این لینک معتبر نیست (فقط http و https).'});
-  const source=h('input',{type:'text',maxlength:'120',value:editing?editing.source:'',placeholder:'منبع / پیشنهاددهنده (مثلاً: علی، یوتیوب)','aria-label':'منبع',autocomplete:'off'});
+  const source=h('input',{type:'text',maxlength:'120',value:editing?editing.source:'',placeholder:'منبع / پیشنهاددهنده (مثلاً: علی، یوتیوب)','aria-label':'منبع',autocomplete:'off',spellcheck:'false',autocorrect:'off'});
   const dur=select([['','مدت تقریبی: نامشخص'],...Object.entries(DURS).map(([k,v])=>[k,'⏳ '+v])],editing?editing.dur:'',null,{'aria-label':'مدت تقریبی'});
-  const tags=h('input',{type:'text',value:editing?editing.tags.join('، '):'',placeholder:'تگ‌ها (با ویرگول جدا کن)','aria-label':'تگ‌ها',autocomplete:'off'});
-  const tagSug=h('div',{class:'tagsug','aria-label':'تگ‌های پرکاربرد'});
-  const renderTagSug=()=>{
-    const cur=new Set(cleanTags(tags.value));
-    tagSug.replaceChildren(...topTags(10).filter(t=>!cur.has(t)).map(t=>h('button',{type:'button',class:'tag',text:'+ '+t,onclick:()=>{
-      tags.value=cleanTags([...cleanTags(tags.value),t]).join('، ');renderTagSug();}})));
-  };
-  tags.addEventListener('input',renderTagSug);
+  const tags=h('input',{type:'text',value:editing?editing.tags.join('، '):'',placeholder:'تگ‌ها (با ویرگول جدا کن)','aria-label':'تگ‌ها',autocomplete:'off',spellcheck:'false',autocorrect:'off'});
+  const renderTagSug=()=>{};
   const hasDetails=!!(editing&&(editing.link||editing.source||editing.dur||editing.tags.length));
   const details=h('details',{class:'more-det',open:hasDetails},
     h('summary',{text:'جزئیات بیشتر (لینک، منبع، مدت، تگ)'}),
-    h('div',{class:'det-grid'},link,linkErr,h('div',{class:'row2'},source,dur),tags,tagSug));
+    h('div',{class:'det-grid'},link,linkErr,h('div',{class:'row2'},source,dur),tags));
   const doAdd=()=>{
     const t=title.value.trim();
     if(!t){title.focus();return;}
@@ -1969,7 +1933,7 @@ function viewGoals(){
     const n=done.filter(i=>i.cat===c.id).length;
     const txt=h('span'),bar=h('i',{style:'width:0'}),barBox=h('div',{class:'bar',style:`--c:${c.color}`},bar),st=h('span',{class:'muted'});
     /* فیلد متنی با کیبورد عددی تا ارقام فارسی هم پذیرفته شوند */
-    const input=h('input',{type:'text',inputmode:'numeric',maxlength:'4',placeholder:'—','aria-label':`هدف سالانه‌ی ${c.name}`,autocomplete:'off'});
+    const input=h('input',{type:'text',inputmode:'numeric',maxlength:'4',placeholder:'—','aria-label':`هدف سالانه‌ی ${c.name}`,autocomplete:'off',spellcheck:'false',autocorrect:'off'});
     const cur=(G[y]&&G[y][c.id])||0;
     input.value=cur?fa(cur):'';
     function paint(){
