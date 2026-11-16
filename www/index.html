@@ -102,6 +102,9 @@ main{max-width:980px;margin:0 auto;padding:16px 16px 110px;outline:none}
 .view{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
 .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
 .sec{padding:18px}
+.year-sec{display:grid;gap:16px;grid-template-columns:minmax(0,1fr);scroll-margin-top:72px}
+.year-h{margin:8px 4px 0;font-size:1.2rem}
+.year-jump{display:flex;gap:8px;flex-wrap:wrap}
 .sec>h2{font-size:1.05rem;margin-bottom:12px;font-weight:800}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:8px 16px;min-height:42px;font-weight:600;transition:transform .15s,background .15s}
 .btn:active{transform:scale(.97)}
@@ -285,7 +288,7 @@ details.more-det summary{cursor:pointer;color:var(--muted);font-size:.9rem;min-h
 .sc div{display:flex;gap:10px;align-items:center}
 
 /* ---------- دیالوگ ---------- */
-dialog.dlg{border:0;border-radius:22px;padding:0;width:calc(100vw - 24px);max-width:420px;max-height:calc(100dvh - 24px);overflow:auto;background:var(--paper);color:var(--ink);box-shadow:0 24px 70px rgba(0,0,0,.4)}
+dialog.dlg{border:0;border-radius:22px;padding:0;width:calc(100vw - 24px);max-width:420px;max-height:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain;background:var(--paper);color:var(--ink);box-shadow:0 24px 70px rgba(0,0,0,.4)}
 dialog.dlg.wide{max-width:600px}
 dialog.dlg[open]{animation:pop .22s ease}
 dialog.dlg::backdrop{background:rgba(20,15,10,.55);backdrop-filter:blur(2px)}
@@ -466,10 +469,9 @@ const JMS=['فرو','ارد','خرد','تیر','مرد','شهر','مهر','آب�
 const GMS=['ژان','فور','مارس','آور','مه','ژوئن','ژوئی','اوت','سپت','اکت','نوا','دسا'];
 const TABS=[
   {id:'journal',icon:'📖',label:'دفتر'},
+  {id:'search',icon:'🔍',label:'جستجو'},
   {id:'wish',icon:'🔖',label:'بعداً'},
-  {id:'stats',icon:'📊',label:'آمار'},
-  {id:'goals',icon:'🎯',label:'اهداف'},
-  {id:'wrapped',icon:'✨',label:'خلاصه سال'},
+  {id:'year',icon:'📊',label:'مرور سال'},
   {id:'data',icon:'⚙️',label:'تنظیمات'}
 ];
 const PROP=new Set(['value','checked','disabled','selected','hidden','readOnly']);
@@ -1473,7 +1475,7 @@ function itemCard(i,idx){
       i.rating?stars(i.rating):null,
       progressBlock(i),
       notesEl,more,
-      i.tags.length?h('div',{class:'tags'},i.tags.map(t=>h('button',{class:'tag',type:'button',title:'فیلتر با این تگ',text:'#'+t,onclick:()=>{UI.filters.tag=t;render();}}))):null,
+      i.tags.length?h('div',{class:'tags'},i.tags.map(t=>h('button',{class:'tag',type:'button',title:'فیلتر با این تگ',text:'#'+t,onclick:()=>{if(UI.tab==='search')UI.sq=t;else UI.filters.tag=t;render();}}))):null,
       h('div',{class:'actions'},
         h('button',{class:'icon-btn',type:'button','aria-label':'ویرایش '+i.title,title:'ویرایش',text:'✏️',onclick:()=>openItemForm(i)}),
         h('button',{class:'icon-btn',type:'button','aria-pressed':String(i.fav),'aria-label':'موردعلاقه',title:'موردعلاقه',text:i.fav?'💔':'🤍',onclick:()=>{i.fav=!i.fav;save();render();}}),
@@ -1516,7 +1518,7 @@ function viewJournal(){
     list.replaceChildren();
     if(!a.length){
       const other=f.allYears?0:filtered(true).length;
-      list.append(h('div',{class:'card empty'},h('div',{class:'big','aria-hidden':'true',text:'🔍'}),h('h2',{text:'چیزی پیدا نشد'}),h('p',{class:'muted',text:'فیلتر یا عبارت جستجو را عوض کن.'}),
+      list.append(h('div',{class:'card empty'},h('div',{class:'big','aria-hidden':'true',text:'🔍'}),h('h2',{text:'چیزی پیدا نشد'}),h('p',{class:'muted',text:'فیلترها را عوض کن.'}),
         other?h('button',{class:'btn primary',type:'button',text:`🗓️ جستجو در همه‌ی سال‌ها (${fa(other)} مورد)`,onclick:()=>{f.allYears=true;render();}}):null));
       return;
     }
@@ -1529,14 +1531,6 @@ function viewJournal(){
       }}));
     }
   }
-  const search=h('input',{type:'search',id:'search',value:f.q,placeholder:'جستجو در عنوان، توضیح و تگ‌ها…   ( / )','aria-label':'جستجو',autocomplete:'off',spellcheck:'false',autocorrect:'off'});
-  let searchTimer;
-  search.addEventListener('input',()=>{
-    f.q=search.value;
-    clearTimeout(searchTimer);
-    const go_=()=>{limit=PAGE;refresh();};
-    if(yearItems.length>150)searchTimer=setTimeout(go_,150);else go_();   // با داده‌ی کم فوری، با داده‌ی زیاد کمی صبر
-  });
   const advActive=!!(f.cat||f.minRating||f.status||f.tag||f.month||f.sort!=='new');
   const advOpen=advActive||window.matchMedia('(min-width:720px)').matches;
   const favBtn=h('button',{class:'btn'+(f.fav?' primary':''),type:'button','aria-pressed':String(f.fav),text:'❤️ موردعلاقه‌ها',onclick:()=>{f.fav=!f.fav;render();}});
@@ -1544,7 +1538,6 @@ function viewJournal(){
   const set=(k,conv)=>v=>{f[k]=conv?conv(v):v;limit=PAGE;refresh();};
   root.append(
     h('div',{class:'card filters'},
-      h('label',{class:'fld'},h('span',{text:'جستجو'}),search),
       h('details',{class:'more-det',open:advOpen},
         h('summary',{text:'فیلتر و مرتب‌سازی'+(advActive?' (فعال)':'')}),
         h('div',{class:'row',style:'margin-top:8px'},
@@ -1997,6 +1990,72 @@ function buildWrapped(){
   w.append(h('div',{class:'w-foot',text:'دفتر سالانه‌ی من 📔'}));
   return w;
 }
+/* ---------- تب «جستجو»: در همه‌ی سال‌ها و لیست «بعداً» ---------- */
+UI.sq='';
+function viewSearch(){
+  const root=h('div',{class:'view'});
+  const input=h('input',{type:'search',id:'search',value:UI.sq,placeholder:'جستجو در عنوان، توضیح، سازنده، مکان و تگ‌ها…','aria-label':'جستجو',autocomplete:'off',spellcheck:'false',autocorrect:'off',enterkeyhint:'search'});
+  const out=h('div',{class:'list'});
+  const count=h('p',{class:'muted',style:'margin:0;font-size:.9rem'});
+  const PAGE=100;let limit=PAGE;
+  function refresh(){
+    const q=norm(UI.sq.trim());
+    out.replaceChildren();
+    if(!q){
+      count.textContent='';
+      out.append(emptyState_('🔍','دنبال چی می‌گردی؟','بخشی از عنوان، توضیح، سازنده، مکان یا تگ را بنویس؛ در همه‌ی سال‌ها و لیست «بعداً» جستجو می‌شود.'));
+      return;
+    }
+    const items=S.items.filter(i=>norm(i.title+' '+i.notes+' '+i.tags.join(' ')+' '+i.creator+' '+i.place).includes(q))
+      .sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created);
+    const wish=S.wish.filter(w=>norm(w.title+' '+w.note+' '+w.tags.join(' ')+' '+w.source).includes(q));
+    count.textContent=`${fa(items.length)} مورد در دفتر`+(wish.length?` و ${fa(wish.length)} مورد در «بعداً»`:'');
+    if(!items.length&&!wish.length){
+      out.append(h('div',{class:'card empty'},h('div',{class:'big','aria-hidden':'true',text:'🔍'}),h('h2',{text:'چیزی پیدا نشد'}),h('p',{class:'muted',text:'عبارت دیگری را امتحان کن.'})));
+      return;
+    }
+    items.slice(0,limit).forEach((i,idx)=>out.append(itemCard(i,idx)));
+    if(items.length>limit){
+      const rest=items.length-limit;
+      out.append(h('button',{class:'btn',type:'button',text:`نمایش ${fa(Math.min(PAGE,rest))} مورد بعدی (${fa(rest)} مورد باقی مانده)`,onclick:()=>{limit+=PAGE;refresh();}}));
+    }
+    if(wish.length){
+      out.append(h('h2',{class:'year-h',text:'🔖 در لیست «بعداً»'}));
+      wish.forEach(w=>{
+        const c=CAT[w.cat];
+        out.append(h('article',{class:'card item',style:`--c:${c.color}`},
+          h('div',{class:'badge','aria-hidden':'true',text:c.icon}),
+          h('div',{class:'body'},h('div',{class:'top'},h('h3',{text:w.title})),
+            h('div',{class:'meta'},h('span',{text:c.name}),w.source?h('span',{class:'dotted',text:w.source}):null),
+            w.note?h('p',{class:'notes',text:w.note}):null,
+            h('div',{class:'actions',style:'margin-top:4px'},h('button',{class:'btn sm',type:'button',text:'رفتن به «بعداً»',onclick:()=>go('wish')})))));
+      });
+    }
+  }
+  let timer;
+  input.addEventListener('input',()=>{
+    UI.sq=input.value;limit=PAGE;
+    clearTimeout(timer);
+    if(S.items.length>150)timer=setTimeout(refresh,150);else refresh();
+  });
+  root.append(h('h2',{class:'sr-only',text:'جستجو'}),h('div',{class:'card filters'},h('label',{class:'fld'},h('span',{text:'جستجو'}),input),count),out);
+  refresh();
+  return root;
+}
+
+/* ---------- تب «مرور سال»: آمار + اهداف + خلاصه‌ی سال در یک صفحه ---------- */
+function viewYear(){
+  const root=h('div',{class:'view'});
+  const parts=[['y-stats','📊','آمار',viewStats],['y-goals','🎯','اهداف',viewGoals],['y-wrapped','✨','خلاصه‌ی سال',viewWrapped]];
+  root.append(h('nav',{class:'year-jump','aria-label':'پرش به بخش'},parts.map(([id,ic,t])=>
+    h('button',{type:'button',class:'chip-btn',text:ic+' '+t,onclick:()=>{const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}}))));
+  parts.forEach(([id,ic,t,fn])=>{
+    const v=fn();
+    root.append(h('section',{class:'year-sec',id,'aria-labelledby':id+'-h'},h('h2',{class:'year-h',id:id+'-h',text:ic+' '+t}),...v.childNodes));
+  });
+  return root;
+}
+
 function viewWrapped(){
   const root=h('div',{class:'view'});
   root.append(buildWrapped());
@@ -2282,9 +2341,9 @@ function viewData(){
     section('میانبرهای صفحه‌کلید',
       h('div',{class:'sc'},
         h('div',{},h('span',{class:'kbd',text:'N'}),h('span',{text:'ثبت مورد جدید'})),
-        h('div',{},h('span',{class:'kbd',text:'/'}),h('span',{text:'جستجو در دفتر'})),
+        h('div',{},h('span',{class:'kbd',text:'/'}),h('span',{text:'تب جستجو'})),
         h('div',{},h('span',{class:'kbd',text:'Q'}),h('span',{text:'ثبت سریع'})),
-        h('div',{},h('span',{class:'kbd',text:'1 – 6'}),h('span',{text:'رفتن به بخش‌ها'})),
+        h('div',{},h('span',{class:'kbd',text:'1 – 5'}),h('span',{text:'رفتن به بخش‌ها'})),
         h('div',{},h('span',{class:'kbd',text:'Esc'}),h('span',{text:'بستن پنجره‌ها'})))));
   return root;
 }
@@ -2340,7 +2399,7 @@ function renderNav(){
   $('#nav').replaceChildren(...TABS.map(t=>h('button',{type:'button','aria-current':UI.tab===t.id?'page':null,onclick:()=>go(t.id)},
     h('span',{class:'ni','aria-hidden':'true',text:t.icon}),h('span',{text:t.label}))));
 }
-const VIEWS={journal:viewJournal,wish:viewWish,stats:viewStats,goals:viewGoals,wrapped:viewWrapped,data:viewData};
+const VIEWS={journal:viewJournal,search:viewSearch,wish:viewWish,year:viewYear,data:viewData};
 /* رندر دوباره همه‌ی عناصر را از نو می‌سازد؛ فوکوس کیبورد را به عنصر هم‌ارزش برمی‌گردانیم
    (اگر عنصر دیگر نبود، مثلاً بعد از حذف، فوکوس به بدنه‌ی اصلی می‌رود تا به ابتدای صفحه نپرد). */
 const fkey=e=>e.getAttribute('aria-label')||e.getAttribute('title')||e.id||(e.textContent||'').trim().slice(0,40)||e.getAttribute('placeholder')||'';
@@ -2365,7 +2424,7 @@ function render(){
   const a=document.activeElement;
   const sig=(a&&a!==document.body&&!a.closest('dialog'))?focusSig(a):null;
   renderHeader();renderNav();renderDatalists();
-  $('#fab').hidden=!['journal','stats','goals'].includes(UI.tab);
+  $('#fab').hidden=!['journal','year'].includes(UI.tab);
   const withBanners=['journal','wish'].includes(UI.tab);
   $('#app').replaceChildren(...(withBanners?banners():[]),VIEWS[UI.tab]());
   restoreFocus(sig);
@@ -2385,9 +2444,9 @@ document.addEventListener('keydown',e=>{
   else if(e.code==='KeyQ'){e.preventDefault();go('journal');const q=$('#qTitle');if(q)q.focus();}
   else if(e.code==='Slash'){
     e.preventDefault();
-    if(UI.tab!=='journal')go('journal');
+    if(UI.tab!=='search')go('search');
     const s=$('#search');if(s)s.focus();
-  }else if(/^Digit[1-6]$/.test(e.code)){go(TABS[+e.code.slice(5)-1].id);}
+  }else if(/^Digit[1-5]$/.test(e.code)){go(TABS[+e.code.slice(5)-1].id);}
 });
 $('#fab').addEventListener('click',()=>openItemForm(null));
 /* دکمه‌ی برگشت اندروید: اول بستن پنجره، بعد برگشت به «دفتر»، در آخر خروج */
