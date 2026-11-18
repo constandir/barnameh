@@ -423,6 +423,24 @@ dialog.dlg::backdrop{background:rgba(20,15,10,.55);backdrop-filter:blur(2px)}
 .wq-extra .row{grid-template-columns:1fr 1fr}
 .pick .ph{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2)}
 .pick .ph h2{margin:0}
+
+/* ---------- round 3: compact chrome on phones ---------- */
+.top-in{flex-wrap:nowrap!important}
+.brand{flex:1 1 0;min-width:0}
+.brand h1{overflow:hidden;text-overflow:ellipsis}
+@media (max-width:719px){
+  #top{position:static;backdrop-filter:none}
+  .top-in{padding:4px 12px}
+  .tools{gap:4px}
+  .year-sel{padding-inline:8px}
+  #nav{padding-top:2px;padding-bottom:calc(2px + var(--sab));transition:transform .25s var(--ease)}
+  #nav button{min-height:48px;padding:4px 2px;gap:0}
+  #nav.away{transform:translateY(105%)}
+  .fab{bottom:calc(68px + var(--sab))}
+  .fab.away{transform:translateY(160px)}
+  #toast{bottom:calc(72px + var(--sab))}
+  main{padding-bottom:96px}
+}
 </style>
 </head>
 <body>
@@ -2646,7 +2664,7 @@ document.addEventListener('keydown',e=>{
 });
 $('#fab').addEventListener('click',()=>openItemForm(null));
 (function(){let y=window.scrollY;addEventListener('scroll',()=>{const n=window.scrollY,f=$('#fab');if(!f)return;
-  if(n>y+8&&n>140)f.classList.add('away');else if(n<y-8||n<=140)f.classList.remove('away');y=n;},{passive:true});})();
+  const nv=$('#nav');if(n>y+8&&n>140){f.classList.add('away');nv.classList.add('away');}else if(n<y-8||n<=140){f.classList.remove('away');nv.classList.remove('away');}y=n;},{passive:true});})();
 /* دکمه‌ی برگشت اندروید: اول بستن پنجره، بعد برگشت به «دفتر»، در آخر خروج */
 if(NATIVE&&capPlugin('App')){
   capPlugin('App').addListener('backButton',()=>{
